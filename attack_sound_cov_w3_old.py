@@ -7,14 +7,12 @@ SFVの6種の基本攻撃のSEの共分散を計算する
 @author: murmur
 """
 
-import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sb
-import warnings
 import soundfile as sf
 from tqdm import tqdm
-
+from scipy import signal
 
 folder = './SFV_SE/'
 filename = ('LP.wav', 'LK.wav', 'MP.wav', 'MK.wav', 'HP.wav', 'HK.wav')
@@ -22,7 +20,16 @@ filename = ('LP.wav', 'LK.wav', 'MP.wav', 'MK.wav', 'HP.wav', 'HK.wav')
 data = [sf.read(folder + k) for k in filename]
 data = [data[k][0] for k in range(6)]
 data[5] = data[5][0:-1]  # HKのデータが何故か1個多かったので揃える
-data_w, samplerate = sf.read(folder + 'whole.wav')
+data_w, fs = sf.read(folder + 'whole.wav')
+
+# ダウンサンプリング
+el = 10
+d_rate = el*el
+fs = int(fs/d_rate)
+data = [signal.decimate(data[k], el, ftype='fir') for k in range(6)]
+data = [signal.decimate(data[k], el, ftype='fir') for k in range(6)]
+data_w = signal.decimate(data_w, el, ftype='fir')#間引き
+data_w = signal.decimate(data_w, el, ftype='fir')#間引き
 
 
 # 標準偏差が1となるよう正規化
@@ -37,10 +44,13 @@ data_w = data_w / np.std(data_w)
 '''
 
 sfunc = []  # 分散共分散行列の要素の時系列成分
-fr_unit = 88  # 44100/60 : 1フレームの長さ
+tr_func = []  # 主成分の要素の時系列成分
+#fr_unit = int(fs/60/7)  # 44100/60 : 1フレームの長さ
+fr_unit = 1
 L = len(data[0])  # 音声データの長さ
-smp = 24182
-fs = 44100
+Lw = len(data_w)
+smp = int((Lw-L)/fr_unit)
+
 
 for k in tqdm(range(0,smp)):
     # 信号を行列形式に並べる（これもリスト内包表現にしたいがわかんない）
