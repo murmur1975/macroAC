@@ -23,26 +23,24 @@ data[5] = data[5][0:-1]  # HKのデータが何故か1個多かったので揃�
 data_w, fs = sf.read(folder + 'whole.wav')
 
 # ダウンサンプリング
-el = 10
-d_rate = el*el
-fs = int(fs/d_rate)
+# decimate関数ヘルプより：ダウンサンプリングレートが13を超える場合は複数回に分ける
+# 理由はおそらく、ダウンサンプリング用LPFを設計できないため
+el = 10  # 1回あたりのダウンサンプリングレート
+d_rate = el*el  # 2回で100になる
+fs = int(fs/d_rate)  # サンプリング周波数を更新
+# ダウンサンプリング用LPFはFIR型とする
+# FIR型フィルタは位相特性が直線なので、波形が保存される
 data = [signal.decimate(data[k], el, ftype='fir') for k in range(6)]
 data = [signal.decimate(data[k], el, ftype='fir') for k in range(6)]
-data_w = signal.decimate(data_w, el, ftype='fir')#間引き
-data_w = signal.decimate(data_w, el, ftype='fir')#間引き
-
+data_w = signal.decimate(data_w, el, ftype='fir')
+data_w = signal.decimate(data_w, el, ftype='fir')
 
 # 標準偏差が1となるよう正規化
 v = [np.std(k) for k in data]
 data = [k/j for k,j in zip(data, v)]
 data_w = data_w / np.std(data_w)
 
-#%% 
-'''
-引数 : 処理したい観測信号の先頭からのフレーム数
-       そのフレームからヒット音声信号の長さを処理対象にする
-'''
-
+# 変数準備
 sfunc = []  # 分散共分散行列の要素の時系列成分
 tr_func = []  # 主成分の要素の時系列成分
 #fr_unit = int(fs/60/7)  # 44100/60 : 1フレームの長さ
@@ -51,7 +49,7 @@ L = len(data[0])  # 音声データの長さ
 Lw = len(data_w)
 smp = int((Lw-L)/fr_unit)
 
-
+# 共分散計算
 for k in tqdm(range(0,smp)):
     # 信号を行列形式に並べる（これもリスト内包表現にしたいがわかんない）
     tmp = data_w[fr_unit*k : fr_unit*k + L]
@@ -67,9 +65,12 @@ for k in tqdm(range(0,smp)):
         sfunc = S[0,1:7]
     else:
         sfunc = np.vstack([sfunc, S[0,1:7]])
-
+        
+#%% グラフプロット
 sb.set()
 x = np.linspace(0, fr_unit*smp/fs, smp)
 ax, fig = plt.subplots()
-plt.plot(x, sfunc)
-plt.legend(['LP', 'LK', 'MP', 'MK', 'HP', 'HK'])
+plt.plot(x, sfunc, alpha=0.7)
+plt.plot(x, data_w[range(Lw-smp,Lw)]/max(abs(data_w)), alpha=0.8)
+plt.legend(['LP', 'LK', 'MP', 'MK', 'HP', 'HK', 'sound'])
+
