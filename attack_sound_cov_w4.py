@@ -69,8 +69,51 @@ for k in tqdm(range(0,smp)):
 #%% グラフプロット
 sb.set()
 x = np.linspace(0, fr_unit*smp/fs, smp)
-ax, fig = plt.subplots()
+th_dtct = [0.5]*len(x) # 識別スレッシュホールド
+fig, ax = plt.subplots()
 plt.plot(x, sfunc, alpha=0.7)
 plt.plot(x, data_w[range(Lw-smp,Lw)]/max(abs(data_w)), alpha=0.8)
+plt.plot(x, th_dtct)
 plt.legend(['LP', 'LK', 'MP', 'MK', 'HP', 'HK', 'sound'])
 
+#%%
+def ann_arrow(ax, pos_a, pos_b, key):
+    def vdline(ax, pos_x):
+        ax.annotate('', xy=(pos_x, -1), xycoords='data',
+                xytext=(pos_x,  1), textcoords='data',
+                arrowprops=dict(arrowstyle='-', linestyle="dashed", color='k', alpha=0.3))
+    
+    #両矢印
+    ax.annotate('', xy=(pos_a[0], pos_a[1]), xycoords='data',
+                xytext=(pos_b[0], pos_b[1]), textcoords='data',
+                arrowprops=dict(arrowstyle='<->', color='dimgray'))
+    # テキスト
+    ax.annotate('detection lag', ((pos_a[0]+pos_b[0])/2, (pos_a[1]+pos_b[1])/2+0.05), xycoords='data', ha='center')
+    # 垂直破線
+    vdline(ax, pos_a[0])
+    vdline(ax, pos_b[0])
+    # アングル矢印2
+    ax.annotate('hit detected\n(cov > 0.5)',
+                xy=(pos_a[0], 1), xycoords='data',
+                xytext=(-80, 10), textcoords='offset points',
+                arrowprops=dict(arrowstyle="->", color='dimgray',
+                                connectionstyle="angle,angleA=0,angleB=90,rad=10"))
+    # アングル矢印2
+    ax.annotate(key+' key\ntriggered\n(probably)',
+                xy=(pos_b[0], 1), xycoords='data',
+                xytext=(20, 10), textcoords='offset points',
+                arrowprops=dict(arrowstyle="->", color='dimgray',
+                                connectionstyle="angle,angleA=0,angleB=90,rad=10"))
+
+fig, ax = plt.subplots(figsize=(10,5))
+plt.plot(x, sfunc, alpha=0.7)
+plt.plot(x, data_w[range(Lw-smp,Lw)]/max(abs(data_w)), alpha=0.8)
+plt.plot(x, th_dtct, color='slateblue', linestyle='dotted')
+plt.legend(['LP', 'LK', 'MP', 'MK', 'HP', 'HK', 'sound'], loc=1)
+plt.xlabel('time[s]')
+plt.ylabel('covariance (each vs sound)')
+plt.xlim([7.25, 8.7])
+L = 207/441
+ann_arrow(ax, (7.77, 0.75), (7.77-L, 0.75), 'LP')
+ann_arrow(ax, (8.37, 0.75), (8.37-L, 0.75), 'LP')
+ax.annotate('threshold', (7.77-L/2,0.55), xycoords='data', ha='center', color='slateblue')
