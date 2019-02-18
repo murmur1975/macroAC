@@ -92,4 +92,7 @@ for idx,(kx,ky) in tqdm(enumerate(zip(np.hstack(mgx), np.hstack(mgy)), start=1))
         ax.set_xticklabels([])
     if idx not in [ 1, 6,11,16,21]:
         ax.set_yticklabels([])
+<<<<<<< HEAD
 
+=======
+>>>>>>> f1178f19f0bb98b8981f45711ada2ee1d0fd5cc8
