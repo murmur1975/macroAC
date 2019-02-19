@@ -34,6 +34,7 @@ fs = int(fs/dsr)
 LP = data_w[2894:3038]
     
 #%% グラフプロット
+from IPython.display import HTML
 sb.set()
 x = np.linspace(-0.5, 0.5, int(fs))  # amp用
 xx = x[221-len(LP):221]
@@ -60,8 +61,8 @@ def plot(frame):
     if k < k_stop:
         plt.cla()  # 図をクリア
         plt.title('Sound Waveforms')
-        plt.plot(x, data_w[k:k+len(x)], alpha=0.8)  # 全体音声プロット
-        plt.plot(xx, LP, alpha=0.7)  # LP音声プロット
+        plt.plot(x, data_w[k:k+len(x)], alpha=0.8)  # 全体SEプロット
+        plt.plot(xx, LP, alpha=0.7)  # LPSEプロット
         plt.xlim(-0.5, 0.5)
         plt.ylim(-3, 3)
         plt.tick_params(labelbottom=False)
@@ -106,8 +107,8 @@ def plot(frame):
         ax.annotate('future', xy=(0.1,pos_ty-0.15), ha='center', color='gray')
         ax.annotate('threshold', xy=(0.48,0.62), ha='right', color='forestgreen')
     if i > 133:
-        ax.annotate('LP detected!', xy=((133-i)/fs,cv[133]), xycoords='data',
-                    xytext=((133-i)/fs+0.15,0.8), textcoords='data', color='coral', fontsize=15, ha='center',
+        ax.annotate('LP hit\ndetected!', xy=((133-i)/fs,cv[133]), xycoords='data',
+                    xytext=((133-i)/fs+0.1,0.8), textcoords='data', color='coral', fontsize=14, ha='center',
                     arrowprops=dict(arrowstyle='->', color='coral'))
     if k == k_stop:
         ax.annotate('covariance is max(1.0)!\n(this means [A])', xy=(0.17, 0.02), color='r', fontsize=15, ha='center')
@@ -121,7 +122,13 @@ def plot(frame):
         plt.vlines(-144/441, 0.5, 1.2, colors='k', linewidth=1, linestyles='dotted', alpha=0.5)
 
     plt.tight_layout()
+    return fig,
     
-ani = animation.FuncAnimation(fig, plot, interval=50, frames=500)
-ani.save('anim.mp4', writer = 'ffmpeg', bitrate=1500, codec='h264')
+# アニメーション描画
+ani = animation.FuncAnimation(fig, plot, interval=50, frames=500, blit=True)
 #plt.show()
+
+# アニメーション保存
+ani.save("bscore.gif")
+#ani.save('anim.mp4', writer = 'ffmpeg', bitrate=1500, codec='h264')
+#HTML(ani.to_html5_video())
